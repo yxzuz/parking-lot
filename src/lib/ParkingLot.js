@@ -5,7 +5,7 @@ export class ParkingLot {
     constructor() {
       this.NUM_LEVELS = 3; // Assuming 3 levels for the parking lot
       this.levels = new Array(this.NUM_LEVELS);
-      for (let i = 0; i < this.NUM_LEVELS; i++) {
+      for (let i = 0; i < this.NUM_LEVELS; i++) {       
         this.levels[i] = new Level(i, 30); // Assuming Level class is defined elsewhere
       }
     }

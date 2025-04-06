@@ -6,7 +6,7 @@ import { Motorcycle } from '../../../lib/Motorcycle';
 import dbConnect from '../../../lib/mongodb';
 import ParkingSession from '../../../models/ParkingSession';
 
-// Singleton instance of the parking lot
+// Singleton 
 let parkingLot;
 
 if (!parkingLot) {
@@ -40,12 +40,10 @@ export default async function handler(req, res) {
     if (existingSession) {
       return res.status(400).json({ 
         success: false, 
-        message: `Vehicle with license plate ${licensePlate} is already parked` 
-      });
+        message: 'Vehicle is already parked' 
+      })
     }
-
-    // Create vehicle using existing classes
-    console.log('Vehicle Type:', vehicleType);
+    // Create a new vehicle instance based on the type
     let vehicle;
     switch (vehicleType) {
       case 'car':
@@ -62,22 +60,18 @@ export default async function handler(req, res) {
           success: false, 
           message: 'Invalid vehicle type. Must be car, bus, or motorcycle' 
         });
-    }
 
-    // Use the existing parking lot class to find a spot
-    const success = parkingLot.parkVehicle(vehicle);
-    
-    if (!success) {
+    }
+    const success_park = parkingLot.parkVehicle(vehicle);
+    if (!success_park) {
       return res.status(400).json({ 
         success: false, 
-        message: `Failed to park ${vehicleType}. No suitable spot available.` 
+        message: 'No available parking spots for this vehicle type' 
       });
     }
-    
     // Get the spot information from the vehicle
-    const spot = vehicle.getParkingSpots()[0]; // Assuming vehicle has an array of assigned spots
+    const spot = vehicle.getParkingSpots()[0]; 
     console.log('Spot:', spot);
-    // Create a session in MongoDB
     const session = new ParkingSession({
       licensePlate,
       vehicleType,
@@ -86,6 +80,8 @@ export default async function handler(req, res) {
       floor: spot.level.floor,
       entryTime: new Date()
     });
+
+    
     
     await session.save();
 
@@ -93,11 +89,13 @@ export default async function handler(req, res) {
       success: true, 
       message: `Successfully parked ${vehicleType} with license plate ${licensePlate}` 
     });
+
+
   } catch (error) {
-    console.error('Error parking vehicle:', error);
     return res.status(500).json({ 
       success: false, 
-      message: 'Internal server error' 
+      message: 'Error checking vehicle status', 
+      error: error.message 
     });
   }
 }

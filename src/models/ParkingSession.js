@@ -37,6 +37,9 @@ const ParkingSessionSchema = new Schema({
     type: Boolean,
     default: true
   }
-}, { timestamps: true });
+});
+
+ParkingSessionSchema.index({ isActive: 1 });
+ParkingSessionSchema.index({ licensePlate: 1, isActive: 1 });
 
 export default mongoose.models.ParkingSession || mongoose.model('ParkingSession', ParkingSessionSchema);

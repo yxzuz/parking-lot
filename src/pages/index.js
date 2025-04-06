@@ -232,12 +232,36 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [removeLicensePlate, setRemoveLicensePlate] = useState('');
 
+
+
+  
+  // // Fetch parking lot status
+  // const fetchParkingStatus = async () => {
+  //   try {
+  //     const response = await fetch('/api/parking/status');
+  //     const data = await response.json();
+      
+  //     if (data.success) {
+  //       setLevels(data.data);
+  //     } else {
+  //       console.error('Error fetching parking status:', data.message);
+  //       setMessage('Failed to load parking status. Please try again.');
+  //       setMessageType('error');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching parking status:', error);
+  //     setMessage('Failed to load parking status. Please try again.');
+  //     setMessageType('error');
+  //   }
+  // };
+
+
   // Fetch parking lot status
   const fetchParkingStatus = async () => {
     try {
-      const response = await fetch('/api/parking/status');
+      const response = await fetch('/api/parkinglot');
       const data = await response.json();
-      
+      console.log('Fetched parking status:', data);
       if (data.success) {
         setLevels(data.data);
       } else {
@@ -253,15 +277,15 @@ export default function Home() {
   };
 
   // Initial load
-  useEffect(() => {
-    fetchParkingStatus();
+  // useEffect(() => {
+  //   fetchParkingStatus();
     
-    // Set up polling for status updates (every 5 seconds)
-    const intervalId = setInterval(fetchParkingStatus, 5000);
+  //   // Set up polling for status updates (every 5 seconds)
+  //   const intervalId = setInterval(fetchParkingStatus, 5000);
     
-    // Clear interval on component unmount
-    return () => clearInterval(intervalId);
-  }, []);
+  //   // Clear interval on component unmount
+  //   return () => clearInterval(intervalId);
+  // }, []);
 
   const parkVehicle = async () => {
     if (!licensePlate.trim()) {
@@ -342,22 +366,22 @@ export default function Home() {
 
   const getSizeLabel = (size) => {
     switch (size) {
-      case VehicleSize.Motorcycle: return 'M';
-      case VehicleSize.Compact: return 'C';
-      case VehicleSize.Large: return 'L';
+      case "motorcycle": return 'M';
+      case "compact": return 'C';
+      case "large": return 'L';
       default: return '?';
     }
   };
 
   const getSpotColor = (spot) => {
-    if (!spot.available) {
+    if (!spot.isAvailable) {
       return vehicleTypeColors.occupied;
     }
     
-    switch (spot.size) {
-      case VehicleSize.Motorcycle: return vehicleTypeColors.motorcycle;
-      case VehicleSize.Compact: return vehicleTypeColors.car;
-      case VehicleSize.Large: return vehicleTypeColors.bus;
+    switch (spot.spotSize) {
+      case "motorcycle": return vehicleTypeColors.motorcycle;
+      case "compact": return vehicleTypeColors.car;
+      case "large": return vehicleTypeColors.bus;
       default: return '#ccc';
     }
   };
@@ -483,22 +507,22 @@ export default function Home() {
             </div>
           </div>
           
-          {levels.map((level) => (
+         {levels.map((level) => (
             <div key={level.floor} className={styles.level}>
               <h3>Level {level.floor} - Available Spots: {level.availableSpots}</h3>
               <div className={styles.parkingGrid}>
                 {level.spots.map((spot) => (
                   <div
-                    key={spot.id}
+                    key={spot.spotNumber}
                     className={styles.parkingSpot}
                     style={{ backgroundColor: getSpotColor(spot) }}
-                    title={spot.available ? `Spot ${spot.id} - ${getSizeLabel(spot.size)}` : `Occupied by ${spot.vehicleLicense}`}
+                    title={spot.isAvailable ? `Spot ${spot.spotNumber} - ${getSizeLabel(spot.spotSize)}` : `Occupied by ${spot.currentVehicle}`}
                   >
                     <span>{spot.id}</span>
-                    <small>{getSizeLabel(spot.size)}</small>
-                    {!spot.available && (
+                    <small>{getSizeLabel(spot.spotSize)}</small>
+                    {!spot.isAvailable && (
                       <div className={styles.licensePlate}>
-                        {spot.vehicleLicense}
+                        {spot.currentVehicle}
                       </div>
                     )}
                   </div>
@@ -510,4 +534,4 @@ export default function Home() {
       </main>
     </div>
   );
-}
+} 
