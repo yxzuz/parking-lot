@@ -277,15 +277,15 @@ export default function Home() {
   };
 
   // Initial load
-  // useEffect(() => {
-  //   fetchParkingStatus();
+  useEffect(() => {
+    fetchParkingStatus();
     
-  //   // Set up polling for status updates (every 5 seconds)
-  //   const intervalId = setInterval(fetchParkingStatus, 5000);
+    // Set up polling for status updates (every 5 seconds)
+    const intervalId = setInterval(fetchParkingStatus, 5000);
     
-  //   // Clear interval on component unmount
-  //   return () => clearInterval(intervalId);
-  // }, []);
+    // Clear interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []);
 
   const parkVehicle = async () => {
     if (!licensePlate.trim()) {
