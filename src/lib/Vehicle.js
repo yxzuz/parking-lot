@@ -19,7 +19,7 @@ export class Vehicle {
   }
 
   park(spot) {
-    console.log('wtf', spot.vehicle);
+    console.log('spot', spot.vehicle);
     console.log('Parking vehicle in spot:', spot.getSize(),spot.isAvailable(),spot.getSize() >= this.getSize());
     if (spot.isAvailable() && spot.getSize() >= this.getSize()) {
       this._parkingSpots.push(spot);

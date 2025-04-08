@@ -1,30 +1,54 @@
-import { VehicleSize } from './VehicleSize.js';
-import { ParkingSpot } from './ParkingSpot.js';
+import dbConnect from './mongodb.js';
+import ParkingSpot from '@/models/ParkingSpot.js';
+import { ParkingSpot as ParkingSpotClass } from './ParkingSpot.js';
 
 export class Level {
-  constructor(flr, numberSpots) {
-    this.floor = flr;
-    this.spots = new Array(numberSpots);
-    this.availableSpots = numberSpots; // number of free spots
+  constructor(level) { //flr, numberSpots
+    this.level = level; // mongo object
+    this.floor = level.floor;
+    this.spots = new Array(level.totalSpots);
+    this.availableSpots = level.availableSpots; // number of free spots
     this.SPOTS_PER_ROW = 10;
 
-    const largeSpots = Math.floor(numberSpots / 4);
-    const bikeSpots = Math.floor(numberSpots / 4);
-    const compactSpots = numberSpots - largeSpots - bikeSpots;
+    // const largeSpots = Math.floor(numberSpots / 4);
+    // const bikeSpots = Math.floor(numberSpots / 4);
+    // const compactSpots = numberSpots - largeSpots - bikeSpots;
 
-    for (let i = 0; i < numberSpots; i++) {
-      let sz = VehicleSize.Motorcycle; 
-      if (i < largeSpots) {
-        sz = VehicleSize.Large;
-      } else if (i < largeSpots + compactSpots) {
-        sz = VehicleSize.Compact;
-      }
+    // for (let i = 0; i < numberSpots; i++) {
+      // let sz = VehicleSize.Motorcycle; 
+      // if (i < largeSpots) {
+      //   sz = VehicleSize.Large;
+      // } else if (i < largeSpots + compactSpots) {
+      //   sz = VehicleSize.Compact;
+      // }
+      // const row = Math.floor(i / this.SPOTS_PER_ROW);
 
-      const row = Math.floor(i / this.SPOTS_PER_ROW);
-      this.spots[i] = new ParkingSpot(this, row, i, sz); // Assuming ParkingSpot is defined elsewhere
-      this.availableSpots = numberSpots
+      // this.spots[i] = new ParkingSpot(this, row, i, sz); 
+      // this.availableSpots = numberSpots
     }
-  }
+  
+    async initialize() {
+      await dbConnect();
+      for (let i = 1; i < this.level.totalSpots + 1; i++) {
+        const spot = await ParkingSpot.findOne({ level: this.level._id, spotNumber: i });
+    
+        if (spot) { // Ensure spot is found
+          this.spots[i] = new ParkingSpotClass(
+            this,
+            spot.row,
+            spot.spotNumber,
+            spot.spotSize,
+            spot.currentVehicle
+          );
+    
+          // console.log('spot4444', this.spots[i].row, this.spots[i].spotNumber, this.spots[i].spotSize, this.spots[i].currentVehicle);
+        } else {
+          console.warn(`Spot ${i} not found on level ${this.floor}`);
+        }
+      }
+      this.availableSpots = this.level.totalSpots;
+    }
+    
 
   getAvailableSpots() {
       return this.availableSpots;
@@ -32,6 +56,7 @@ export class Level {
 
   /* Try to find a place to park this vehicle. Return false if failed. */
   parkVehicle(vehicle) {
+    // console.log("IDK", this.getAvailableSpots(), vehicle.getSpotsNeeded());
       if (this.getAvailableSpots() < vehicle.getSpotsNeeded()) {
       return false;
       }
@@ -46,6 +71,7 @@ export class Level {
   }
   /* Park a vehicle starting at the spot spotNumber, and continuing until vehicle.spotsNeeded. */
   parkStartingAtSpot(spotNumber, vehicle) {
+    console.log("Park starting at spot", spotNumber, vehicle.getSpotsNeeded());
       vehicle.clearSpots();
       let success = true;
 
@@ -66,11 +92,13 @@ export class Level {
     let lastRow = -1;
     let spotsFound = 0;
 
-    for (let i = 0; i < this.spots.length; i++) {
+    for (let i = 1; i < this.spots.length; i++) {
       const spot = this.spots[i];
-      if (lastRow !== spot.getRow()) {
+      // console.log("SPOT", spot.spotNumber, spot.row,spot.spotSize, spot.vehicle);
+      console.log("fit",spot.canFitVehicle(vehicle));
+      if (lastRow !== spot.row) {
         spotsFound = 0;
-        lastRow = spot.getRow();
+        lastRow = spot.row;
       }
       if (spot.canFitVehicle(vehicle)) {
         spotsFound++;
@@ -81,6 +109,7 @@ export class Level {
         return i - (spotsNeeded - 1);
       }
     }
+    console.log("NO SPOTS FOUND");
 
     return -1;
   }
@@ -89,11 +118,11 @@ export class Level {
   let lastRow = -1;
   for (let i = 0; i < this.spots.length; i++) {
     const spot = this.spots[i];
-    if (spot.getRow() !== lastRow) {
+    if (spot.row !== lastRow) {
       console.log(" "); // Print a space
-      lastRow = spot.getRow();
+      lastRow = spot.row;
     }
-    spot.print();
+    // spot.print();
   }
   }
 

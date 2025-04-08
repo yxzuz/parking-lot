@@ -1,4 +1,4 @@
-// pages/api/vehicles/park.js - Updated to use both classes and MongoDB
+// pages/api/vehicles/park.js 
 import { ParkingLot } from '../../../lib/ParkingLot';
 import { Car } from '../../../lib/Car';
 import { Bus } from '../../../lib/Bus';
@@ -62,33 +62,52 @@ export default async function handler(req, res) {
         });
 
     }
-    const success_park = parkingLot.parkVehicle(vehicle);
-    if (!success_park) {
+
+    await parkingLot.initialize()
+
+    const success = parkingLot.parkVehicle(vehicle);
+    if (!success) {
       return res.status(400).json({ 
         success: false, 
         message: 'No available parking spots for this vehicle type' 
       });
     }
-    // Get the spot information from the vehicle
-    const spot = vehicle.getParkingSpots()[0]; 
+    //Get the spot information from the vehicle
+    const spot = vehicle.getParkingSpots(); 
     console.log('Spot:', spot);
-    const session = new ParkingSession({
-      licensePlate,
-      vehicleType,
-      spotId: spot.spotNumber,
-      row: spot.row,
-      floor: spot.level.floor,
-      entryTime: new Date()
+    // const session = new ParkingSession({
+    //   licensePlate,
+    //   vehicleType,
+    //   spotId: spot.spotNumber,
+    //   row: spot.row,
+    //   floor: spot.level.floor,
+    //   entryTime: new Date()
+    // });
+
+    // await session.save();
+    const msg = success ? `${vehicle.getSize()} with license plate ${vehicle.getLicensePlate()} was parked in spot` : `Bus with license plate ${vehicle.getLicensePlate()} was not parked`;
+
+    res.status(200).json({
+      message: msg,
+      spotneeded: vehicle.getSpotsNeeded(),
+      size: vehicle.getSize(),
+      status: success,
+      park: vehicle.getParkingSpots().map(spot => ({
+        floor: spot.level.floor,
+        spotNumber: spot.spotNumber,
+        size: spot.spotSize
+      })),
+      levels: parkingLot.levels.map(level => ({
+        floor: level.floor,
+        availableSpots: level.availableSpots,
+        totalSpots: level.availableSpots
+      }))
     });
 
-    
-    
-    await session.save();
-
-    return res.status(200).json({ 
-      success: true, 
-      message: `Successfully parked ${vehicleType} with license plate ${licensePlate}` 
-    });
+    // return res.status(200).json({ 
+    //   success: true, 
+    //   message: `Successfully parked ${vehicleType} with license plate ${licensePlate}` 
+    // });
 
 
   } catch (error) {
