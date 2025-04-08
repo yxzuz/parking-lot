@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     await dbConnect();
     // Fetch all parking levels
     const levelsData = await ParkingLevel.find({});
-    const spots = await ParkingSpot.find({})
+    const spots = await ParkingSpot.find({}).sort({ spotNumber: 1, row: 1 });
     // console.log('spots',spots);
 
     // console.log('leveldata',levelsData);
