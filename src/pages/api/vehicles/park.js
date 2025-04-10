@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
-
+ 
   try {
     await dbConnect();
     
@@ -68,7 +68,7 @@ export default async function handler(req, res) {
     // Search each level for available spots
     for (const level of levels) {
       if (level.availableSpots < spotsNeeded) {
-        continue; // Not enough spots on this level
+        continue; // Not enough spots to park
       }
       
       // Find available spots on this level
@@ -78,7 +78,6 @@ export default async function handler(req, res) {
         spotSize: { $in: allowedSizes }
       }).sort({ row: 1, spotNumber: 1 });
       
-      // Check for consecutive spots if needed
       if (spotsNeeded === 1) {
         if (spots.length > 0) {
           selectedLevel = level;
@@ -86,7 +85,7 @@ export default async function handler(req, res) {
           break;
         }
       } else {
-        // For vehicles needing multiple spots, find consecutive ones
+        // for bus (5 spots)
         let consecutiveSpots = [];
         let lastRow = -1;
         let lastSpotNumber = -1;
@@ -121,7 +120,7 @@ export default async function handler(req, res) {
       }
     }
     
-    // If no suitable spots were found
+    // Cannot find spots
     if (!selectedLevel || selectedSpots.length !== spotsNeeded) {
       return res.status(400).json({ 
         success: false, 
@@ -129,7 +128,6 @@ export default async function handler(req, res) {
       });
     }
     
-    // Update database to mark spots as occupied
     for (const spot of selectedSpots) {
       spot.isAvailable = false;
       spot.currentVehicle = licensePlate;
@@ -152,7 +150,7 @@ export default async function handler(req, res) {
     });
     await session.save();
     
-    // Return success response
+
     return res.status(200).json({
       success: true,
       message: `${vehicleType} with license plate ${licensePlate} was parked successfully`,
