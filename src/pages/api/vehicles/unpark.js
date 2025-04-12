@@ -2,6 +2,8 @@ import dbConnect from '../../../lib/mongodb';
 import ParkingSession from '../../../models/ParkingSession';
 import ParkingSpot from '../../../models/ParkingSpot';
 import ParkingLevel from '../../../models/ParkingLevel';
+import { ParkingLot } from '../../../lib/ParkingLot';
+import { initializeParkingLot } from '@/lib/Initialize';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -19,6 +21,13 @@ export default async function handler(req, res) {
         message: 'License plate is required' 
       });
     }
+
+    let parkingLot;
+    
+    if (!parkingLot) {
+      parkingLot = new ParkingLot();
+    }
+    await initializeParkingLot(parkingLot);
 
     // Check if vehicle is already parked
     const existingSession = await ParkingSession.findOne({ 
@@ -41,42 +50,59 @@ export default async function handler(req, res) {
       });
     }
     const vehicleType = existingSession.vehicleType;
-    let spotsNeeded;
-    switch (vehicleType) {
-      case 'car':
-        spotsNeeded = 1;
-        break;
-      case 'bus':
-        spotsNeeded = 5;
-        break;
-      case 'motorcycle':
-        spotsNeeded = 1;
-        break;
-      default:
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Invalid vehicle type. Must be car, bus, or motorcycle' 
-        });
-    }
+    const status = await parkingLot.unparkVehicle(licensePlate);
 
-    const myLevel = await ParkingLevel.findById(mySpots[0].level);
-
-    for (const spot of mySpots) {
-      spot.isAvailable = true;
-      spot.currentVehicle = null;
-      await spot.save();
+    if (!status) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Failed to unpark vehicle' 
+      });
     }
+    else {
+      console.log(`Vehicle ${licensePlate} unparked successfully`);
+      //Update the parking session to mark it as inactive
+      existingSession.isActive = false;
+      existingSession.exitTime = new Date();
+      existingSession.isActive = false;
+      await existingSession.save();
+
+    }
+    // let spotsNeeded;
+    // switch (vehicleType) {
+    //   case 'car':
+    //     spotsNeeded = 1;
+    //     break;
+    //   case 'bus':
+    //     spotsNeeded = 5;
+    //     break;
+    //   case 'motorcycle':
+    //     spotsNeeded = 1;
+    //     break;
+    //   default:
+    //     return res.status(400).json({ 
+    //       success: false, 
+    //       message: 'Invalid vehicle type. Must be car, bus, or motorcycle' 
+    //     });
+    // }
+
+    // const myLevel = await ParkingLevel.findById(mySpots[0].level);
+
+    // for (const spot of mySpots) {
+    //   spot.isAvailable = true;
+    //   spot.currentVehicle = null;
+    //   await spot.save();
+    // }
 
 
     // Update the parking session to mark it as inactive
-    existingSession.isActive = false;
-    existingSession.exitTime = new Date();
-    existingSession.isActive = false;
-    await existingSession.save();
+    // existingSession.isActive = false;
+    // existingSession.exitTime = new Date();
+    // existingSession.isActive = false;
+    // await existingSession.save();
 
     // Update the parking level to mark it as available
-    myLevel.availableSpots += spotsNeeded;
-    await myLevel.save();
+    // myLevel.availableSpots += spotsNeeded;
+    // await myLevel.save();
 
 
     
@@ -85,9 +111,9 @@ export default async function handler(req, res) {
         success: true,
         message: `Vehicle with license plate ${licensePlate} was unparked successfully`,
         level: {
-            floor: myLevel.floor,
-            availableSpots: myLevel.availableSpots,
-            totalSpots: myLevel.totalSpots
+            floor: existingSession.floor,
+            availableSpots: existingSession.availableSpots,
+            totalSpots: existingSession.totalSpots
         }
         });
     

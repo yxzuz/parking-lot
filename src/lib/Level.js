@@ -184,13 +184,21 @@ export class Level {
   this.level.save();
   }
 
-  unparkVehicle(vehicle_license_plate) {
+  async unparkVehicle(vehicle_license_plate) {
     for (let i = 1; i < this.spots.length; i++) {
       const spot = this.spots[i];
-      console.log('spot unpark', spot,spot.vehicle ,spot.vehicle.getLicensePlate() , vehicle_license_plate);
-      if (spot && spot.vehicle && spot.vehicle.getLicensePlate() === vehicle_license_plate) {
-        spot.removeVehicle();
-        return true;
+      console.log("type", typeof spot.vehicle, spot.vehicle);
+      if (spot && spot.vehicle && spot.vehicle === vehicle_license_plate) {
+        const success = await spot.removeVehicle();
+        if (success) {
+          console.log(`Vehicle ${vehicle_license_plate} unparked from level ${this.floor}, spot ${i}`);
+          return true;
+        } else {
+          console.log(`Failed to unpark vehicle ${vehicle_license_plate} from level ${this.floor}, spot ${i}`);
+          return false;
+        }
+
+        
       }
     }
     return false;

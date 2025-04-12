@@ -29,6 +29,7 @@ export class ParkingSpot {
         }
         vehicle.park(this); // Notify the vehicle it's parked
         this.vehicle = vehicle; // Park the vehicle
+        console.log("🚗 Vehicle parked in spot:",typeof vehicle);
         this.spotMongo.currentVehicle = vehicle.getLicensePlate(); // Update the MongoDB object
         this.spotMongo.isAvailable = false; // Mark the spot as occupied
         try {
@@ -55,12 +56,19 @@ export class ParkingSpot {
         return this.spotSize; // Return the size of the spot
     }
 
-    removeVehicle() {
+  async removeVehicle() {
         this.level.spotFreed(); // Free the spot from the level
         this.vehicle = null; // Remove the vehicle from the spot
         this.spotMongo.currentVehicle = null; // Update the MongoDB object
         this.spotMongo.isAvailable = true; // Mark the spot as available
-        this.spotMongo.save(); // Save the updated MongoDB object
+        try {
+            this.spotMongo.save(); // Save the updated MongoDB object
+        }
+        catch (error) {
+            console.error("Error saving parking spot:", error);
+            return false; // Save failed, removal failed
+        }
+        return true; // Removal successful
     }
 
     print() {

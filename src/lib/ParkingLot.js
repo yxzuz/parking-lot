@@ -59,32 +59,39 @@ export class ParkingLot {
   //   console.log("Parking lot initialization complete!");
   // }
 
-async parkVehicle(vehicle) {
-    if (!this.initialized) {
-      throw new Error("Parking lot not initialized. Call initialize() first");
-    }
-    
-    for (let i = 0; i < this.levels.length; i++) {
-      console.log(`Trying to park vehicle ${vehicle.getLicensePlate()} in level ${i}`);
-      const parked = await this.levels[i].parkVehicle(vehicle); // <-- WAIT for result
-      if (parked) {
-        console.log(`Successfully parked vehicle ${vehicle.getLicensePlate()} in level ${i}`);
-        return true;
+  async parkVehicle(vehicle) {
+      if (!this.initialized) {
+        throw new Error("Parking lot not initialized. Call initialize() first");
       }
+      
+      for (let i = 0; i < this.levels.length; i++) {
+        console.log(`Trying to park vehicle ${vehicle.getLicensePlate()} in level ${i}`);
+        const parked = await this.levels[i].parkVehicle(vehicle); // <-- WAIT for result
+        if (parked) {
+          console.log(`Successfully parked vehicle ${vehicle.getLicensePlate()} in level ${i}`);
+          return true;
+        }
+      }
+    
+      console.log(`Failed to park vehicle ${vehicle.getLicensePlate()} in any level`);
+      return false;
     }
-  
-    console.log(`Failed to park vehicle ${vehicle.getLicensePlate()} in any level`);
-    return false;
-  }
-  unparkVehicle(vehicle_license_plate) {
+  async unparkVehicle(vehicle_license_plate) {
     console.log(`Unparking vehicle ${vehicle_license_plate}`);
     if (!this.initialized) {
       throw new Error("Parking lot not initialized. Call initialize() first");
     }
+
+    // const spot = await ParkingSpot.findOne({ currentVehicle: vehicle_license_plate });
+    // if (!spot) {
+    //   console.log(`Vehicle ${vehicle_license_plate} not found in any spot`);
+    //   return false;
+    // }
     
     for (let i = 0; i < this.levels.length; i++) {
       console.log(`Trying to unpark vehicle ${vehicle_license_plate} in level ${i}`);
-      if (this.levels[i].unparkVehicle(vehicle_license_plate)) {
+      const success = await this.levels[i].unparkVehicle(vehicle_license_plate);
+      if (success){
         console.log(`Successfully unparked vehicle ${vehicle_license_plate} in level ${i}`);
         return true;
       }
