@@ -58,7 +58,7 @@ export default async function handler(req, res) {
         message: 'Failed to unpark vehicle' 
       });
     }
-    else {
+    else if (status) {
       console.log(`Vehicle ${licensePlate} unparked successfully`);
       //Update the parking session to mark it as inactive
       existingSession.isActive = false;
@@ -122,7 +122,7 @@ export default async function handler(req, res) {
     console.error("Parking error:", error);
     return res.status(500).json({ 
       success: false, 
-      message: 'Error parking vehicle', 
+      message: 'Error unparking vehicle', 
       error: error.message 
     });
   }

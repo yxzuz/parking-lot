@@ -29,11 +29,18 @@ export class ParkingSpot {
         }
         vehicle.park(this); // Notify the vehicle it's parked
         this.vehicle = vehicle; // Park the vehicle
-        console.log("🚗 Vehicle parked in spot:",typeof vehicle);
+        console.log("🚗 Vehicle parked in spot:",this.vehicle);
         this.spotMongo.currentVehicle = vehicle.getLicensePlate(); // Update the MongoDB object
         this.spotMongo.isAvailable = false; // Mark the spot as occupied
         try {
             await this.spotMongo.save(); // Save the updated MongoDB object
+            if (vehicle.getParkingSpots()){
+                for (let i = 0; i < vehicle.getParkingSpots().length; i++){
+                    console.log("🚗 Vehicle parked in spot:",vehicle.getParkingSpots()[i].getSpotNumber());
+                }
+              console.log("Parking spot saved successfully {");
+            }
+            
 
         }
         catch (error) {

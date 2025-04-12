@@ -181,26 +181,58 @@ export class Level {
   spotFreed() {
   this.availableSpots++;
   this.level.availableSpots++;
-  this.level.save();
+  // this.level.save();
   }
 
-  async unparkVehicle(vehicle_license_plate) {
-    for (let i = 1; i < this.spots.length; i++) {
-      const spot = this.spots[i];
-      console.log("type", typeof spot.vehicle, spot.vehicle);
-      if (spot && spot.vehicle && spot.vehicle === vehicle_license_plate) {
-        const success = await spot.removeVehicle();
-        if (success) {
-          console.log(`Vehicle ${vehicle_license_plate} unparked from level ${this.floor}, spot ${i}`);
-          return true;
-        } else {
-          console.log(`Failed to unpark vehicle ${vehicle_license_plate} from level ${this.floor}, spot ${i}`);
-          return false;
-        }
+  // async unparkVehicle(vehicle_license_plate) {
+  //   for (let i = 1; i < this.spots.length; i++) {
+  //     const spot = this.spots[i];
+  //     console.log("type", typeof spot.vehicle, spot.vehicle);
+  //     if (spot && spot.vehicle && spot.vehicle === vehicle_license_plate) {
+  //       const success = await spot.removeVehicle();
+  //       if (success) {
+  //         console.log(`Vehicle ${vehicle_license_plate} unparked from level ${this.floor}, spot ${i}`);
+  //         return true;
+  //       } else {
+  //         console.log(`Failed to unpark vehicle ${vehicle_license_plate} from level ${this.floor}, spot ${i}`);
+  //         return false;
+  //       }
 
         
+  //     }
+  //   }
+  //   return false;
+  // }
+  async unparkVehicle(vehicle_license_plate) {
+    let anySpotFreed = false;
+    let spotsFreed = 0;
+    
+    for (let i = 1; i < this.spots.length; i++) {
+      const spot = this.spots[i];
+      
+      if (spot && spot.vehicle && spot.vehicle === vehicle_license_plate) {
+        const success = await spot.removeVehicle();
+        
+        if (success) {
+          console.log(`Vehicle ${vehicle_license_plate} unparked from level ${this.floor}, spot ${i}`);
+          anySpotFreed = true;
+          spotsFreed++;
+        } else {
+          console.log(`Failed to unpark vehicle ${vehicle_license_plate} from level ${this.floor}, spot ${i}`);
+        }
       }
     }
-    return false;
+    
+    // Save the level document only once after all spots are freed
+    if (anySpotFreed) {
+      try {
+        await this.level.save();
+        console.log(`Level ${this.floor} updated after freeing ${spotsFreed} spots`);
+      } catch (error) {
+        console.error('Error saving level after unparking:', error);
+      }
+    }
+    
+    return anySpotFreed;
   }
 }

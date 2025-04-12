@@ -245,9 +245,8 @@ export default async function handler(req, res) {
 
     }
 
-    // await parkingLot.initialize()
 
-    const success = parkingLot.parkVehicle(vehicle);
+    const success = await parkingLot.parkVehicle(vehicle);
     if (!success) {
       return res.status(400).json({ 
         success: false, 
@@ -255,40 +254,65 @@ export default async function handler(req, res) {
       });
     }
     //Get the spot information from the vehicle
-    const selectedLevel = vehicle.getParkingSpots()[0].level;
-    const selectedSpots = vehicle.getParkingSpots();
-    const spot = vehicle.getParkingSpots(); 
-    console.log('Spot:', spot);
-    const session = new ParkingSession({
-      licensePlate,
-      vehicleType,
-      spotId: selectedSpots[0].spotNumber,
-      row: selectedSpots[0].row,
-      floor: selectedLevel.floor,
-      entryTime: new Date(),
-      isActive: true
-    });
-    await session.save();
+    // const selectedLevel = vehicle.getParkingSpots()[0].level;
+    // const selectedSpots = vehicle.getParkingSpots();
+    // const spot = vehicle.getParkingSpots(); 
+    // console.log('Spot:', spot);
+    // const session = new ParkingSession({
+    //   licensePlate,
+    //   vehicleType,
+    //   spotId: selectedSpots[0].spotNumber,
+    //   row: selectedSpots[0].row,
+    //   floor: selectedLevel.floor,
+    //   entryTime: new Date(),
+    //   isActive: true
+    // });
+    // await session.save();
 
 
-    const msg = success ? `${vehicle.getSize()} with license plate ${vehicle.getLicensePlate()} was parked in spot` : `Bus with license plate ${vehicle.getLicensePlate()} was not parked`;
+  const selectedSpots = vehicle.getParkingSpots();
 
-    res.status(200).json({
-      message: msg,
-      spotneeded: vehicle.getSpotsNeeded(),
-      size: vehicle.getSize(),
-      status: success,
-      park: vehicle.getParkingSpots().map(spot => ({
-        floor: spot.level.floor,
-        spotNumber: spot.spotNumber,
-        size: spot.spotSize
-      })),
-      levels: parkingLot.levels.map(level => ({
-        floor: level.floor,
-        availableSpots: level.availableSpots,
-        totalSpots: level.availableSpots
-      }))
-    });
+  if (!selectedSpots || selectedSpots.length === 0) {
+    throw new Error("🚨 Vehicle has no assigned parking spots.");
+  }
+
+  const selectedLevel = selectedSpots[0].level;
+
+  if (!selectedLevel) {
+    throw new Error("🚨 Parking spot has no level assigned.");
+  }
+
+  const session = new ParkingSession({
+    licensePlate,
+    vehicleType,
+    spotId: selectedSpots[0].spotNumber,
+    row: selectedSpots[0].row,
+    floor: selectedLevel.floor,
+    entryTime: new Date(),
+    isActive: true
+  });
+  await session.save();
+
+
+
+  const msg = success ? `${vehicle.getSize()} with license plate ${vehicle.getLicensePlate()} was parked in spot` : `Bus with license plate ${vehicle.getLicensePlate()} was not parked`;
+
+      res.status(200).json({
+        message: msg,
+        spotneeded: vehicle.getSpotsNeeded(),
+        size: vehicle.getSize(),
+        status: success,
+        park: vehicle.getParkingSpots().map(spot => ({
+          floor: spot.level.floor,
+          spotNumber: spot.spotNumber,
+          size: spot.spotSize
+        })),
+        levels: parkingLot.levels.map(level => ({
+          floor: level.floor,
+          availableSpots: level.availableSpots,
+          totalSpots: level.availableSpots
+        }))
+      });
 
   // res.status(200).json({
   //   success:true,
