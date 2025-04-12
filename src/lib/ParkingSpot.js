@@ -2,12 +2,13 @@ import { VehicleSize } from "./VehicleSize.js";
 
 
 export class ParkingSpot {
-    constructor(level, row, spotNumber, spotSize) {
-      this.level = level;
+    constructor(level,spotMongo, row,  spotNumber, spotSize, vehicle= null) {
+      this.level = level; // level object
+      this.spotMongo = spotMongo; // MongoDB object
       this.row = row;
       this.spotNumber = spotNumber;
       this.spotSize = spotSize;
-      this.vehicle = null; // Initially no vehicle parked
+      this.vehicle = vehicle; // Initially no vehicle parked
     }
   
     setAvailable(status){
@@ -20,13 +21,25 @@ export class ParkingSpot {
     canFitVehicle(vehicle) {
       return this.isAvailable() && vehicle.canFitInSpot(this);
     }
-    /* Park vehicle in this spot. */
-    park(vehicle) {
+
+
+  async park(vehicle) {
         if (!this.canFitVehicle(vehicle)) { // Check if the vehicle fits
         return false; // Vehicle doesn't fit, parking failed
         }
         vehicle.park(this); // Notify the vehicle it's parked
         this.vehicle = vehicle; // Park the vehicle
+        this.spotMongo.currentVehicle = vehicle.getLicensePlate(); // Update the MongoDB object
+        this.spotMongo.isAvailable = false; // Mark the spot as occupied
+        try {
+            await this.spotMongo.save(); // Save the updated MongoDB object
+
+        }
+        catch (error) {
+            console.error("Error saving parking spot:", error);
+            return false; // Save failed, parking failed
+        }
+        
         return true; // Parking successful
     }
     
@@ -45,6 +58,9 @@ export class ParkingSpot {
     removeVehicle() {
         this.level.spotFreed(); // Free the spot from the level
         this.vehicle = null; // Remove the vehicle from the spot
+        this.spotMongo.currentVehicle = null; // Update the MongoDB object
+        this.spotMongo.isAvailable = true; // Mark the spot as available
+        this.spotMongo.save(); // Save the updated MongoDB object
     }
 
     print() {

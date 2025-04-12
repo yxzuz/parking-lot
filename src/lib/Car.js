@@ -14,6 +14,5 @@ export class Car extends Vehicle {
 
   print() {
     console.log(`Car with license plate: ${this.getLicensePlate()}`);
-    // super.print(); // Call the parent class's print method
   }
 }

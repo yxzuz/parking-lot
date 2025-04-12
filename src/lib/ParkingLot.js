@@ -2,78 +2,173 @@ import { Level } from './Level.js';
 import dbConnect from './mongodb.js';
 import ParkingLevel from '../models/ParkingLevel.js';
 
+let instance = null;
 
-// export class ParkingLot {
-//     constructor() {
-//       this.NUM_LEVELS = 3; // 3 levels for the parking lot
-//       this.levels = new Array(this.NUM_LEVELS);
-//       this.level_ids = {0: "67f2a086b02803c2471eb834", 1:"67f2a086b02803c2471eb835", 2:"67f2a086b02803c2471eb836"};
-//       this.initialize();
-//       for (let i = 0; i < this.NUM_LEVELS; i++) {
-//         console.log(`Level afterrrrrrrnds ${i} ${this.levels[i]}`);
-//       }
-//     }
-
-//     async initialize() {
-//       // Connect to the database before fetching levels
-//       await dbConnect();  // Assuming dbConnect sets up the MongoDB connection
-
-//       // Fetch levels from the database using their IDs
-//       for (let i = 0; i < this.NUM_LEVELS; i++) {
-//           const level = await ParkingLevel.findOne({ _id: this.level_ids[i] });
-//           if (level) {
-//               this.levels[i] = new Level(level); 
-//           } else {
-//               console.error(`Level ${i} not found`);
-//           }
-//       }
-//       console.log("Levels after initialization:", this.levels);
-//   }
 export class ParkingLot {
   constructor() {
     this.NUM_LEVELS = 3;
     this.levels = new Array(this.NUM_LEVELS);
-    this.level_ids = {0: "67f2a086b02803c2471eb834", 1:"67f2a086b02803c2471eb835", 2:"67f2a086b02803c2471eb836"};
+    this.level_ids = {
+      0: "67f2a086b02803c2471eb834", 
+      1: "67f2a086b02803c2471eb835", 
+      2: "67f2a086b02803c2471eb836"
+    };
+    this.initialized = false;
   }
-
-  async initialize() {
-    await dbConnect();
-    for (let i = 0; i < this.NUM_LEVELS; i++) {
-        const level = await ParkingLevel.findOne({ _id: this.level_ids[i] });
-        if (level) {
-            this.levels[i] = new Level(level);
-            console.log("Levels after initialization:", this.levels[i].availableSpots);
-            await this.levels[i].initialize(); // Initialize each level
-        } else {
-            console.error(`Level ${i} not found`);
-        }
+  
+  // Get singleton instance with guaranteed initialization
+  static async getInstance() {
+    if (!instance) {
+      instance = new ParkingLot();
     }
+    
+    // Ensure initialization happens only once
+    if (!instance.initialized) {
+      await instance.initialize();
+    }
+    
+    return instance;
   }
-
-  // static async create() { // ⬅ Factory method
-  //     const parkingLot = new ParkingLot();
-  //     await parkingLot.initialize();
-  //     return parkingLot;
+  
+  // async initialize() {
+  //   // if (this.initialized) return; // Prevent multiple initializations
+    
+  //   console.log("Initializing parking lot...");
+  //   await dbConnect();
+    
+  //   // Load all levels in parallel for efficiency
+  //   const levelPromises = Array(this.NUM_LEVELS).fill().map(async (_, i) => {
+  //     try {
+  //       const level = await ParkingLevel.findOne({ _id: this.level_ids[i] });
+  //       if (level) {
+  //         this.levels[i] = new Level(level);
+  //         await this.levels[i].initialize();
+  //         console.log(`Level ${i} initialized with ${this.levels[i].availableSpots} available spots`);
+  //       } else {
+  //         console.error(`Level ${i} not found`);
+  //         throw new Error(`Level ${i} not found in database`);
+  //       }
+  //     } catch (error) {
+  //       console.error(`Failed to initialize level ${i}:`, error);
+  //       throw error;
+  //     }
+  //   });
+    
+  //   await Promise.all(levelPromises);
+  //   this.initialized = true;
+  //   console.log("Parking lot initialization complete!");
   // }
 
-
-    /* Park the vehicle in a spot (or multiple spots). Return false if failed. */
-    parkVehicle(vehicle) {
-      // console.log(777,this.levels[1]);
-      for (let i = 0; i < this.levels.length; i++) {
-        if (this.levels[i].parkVehicle(vehicle)) { 
-          console.log(`Parked vehicle in level ${i}`);
-          return true;
-        }
-      }
-      return false;
+async parkVehicle(vehicle) {
+    if (!this.initialized) {
+      throw new Error("Parking lot not initialized. Call initialize() first");
     }
-
-    print(){
-      console.log("Parking Lot:");
-      for (let i = 0; i < this.levels.length; i++) {
-        console.log(`Level ${i}:`);
-        this.levels[i].print(); // Assuming Level has a print method
+    
+    for (let i = 0; i < this.levels.length; i++) {
+      console.log(`Trying to park vehicle ${vehicle.getLicensePlate()} in level ${i}`);
+      const parked = await this.levels[i].parkVehicle(vehicle); // <-- WAIT for result
+      if (parked) {
+        console.log(`Successfully parked vehicle ${vehicle.getLicensePlate()} in level ${i}`);
+        return true;
       }
     }
+  
+    console.log(`Failed to park vehicle ${vehicle.getLicensePlate()} in any level`);
+    return false;
   }
+  unparkVehicle(vehicle_license_plate) {
+    console.log(`Unparking vehicle ${vehicle_license_plate}`);
+    if (!this.initialized) {
+      throw new Error("Parking lot not initialized. Call initialize() first");
+    }
+    
+    for (let i = 0; i < this.levels.length; i++) {
+      console.log(`Trying to unpark vehicle ${vehicle_license_plate} in level ${i}`);
+      if (this.levels[i].unparkVehicle(vehicle_license_plate)) {
+        console.log(`Successfully unparked vehicle ${vehicle_license_plate} in level ${i}`);
+        return true;
+      }
+    }
+    
+    console.log(`Failed to unpark vehicle ${vehicle_license_plate} in any level`);
+    return false;
+  }
+}
+
+
+
+// // Singleton implementation with proper async initialization
+// let instance = null;
+
+// export class ParkingLot {
+//   constructor() {
+//     this.NUM_LEVELS = 3;
+//     this.levels = new Array(this.NUM_LEVELS);
+//     this.level_ids = {
+//       0: "67f2a086b02803c2471eb834", 
+//       1: "67f2a086b02803c2471eb835", 
+//       2: "67f2a086b02803c2471eb836"
+//     };
+//     this.initialized = false;
+//   }
+  
+//   // Get singleton instance with guaranteed initialization
+//   static async getInstance() {
+//     if (!instance) {
+//       instance = new ParkingLot();
+//     }
+    
+//     // Ensure initialization happens only once
+//     if (!instance.initialized) {
+//       await instance.initialize();
+//     }
+    
+//     return instance;
+//   }
+  
+//   async initialize() {
+//     if (this.initialized) return; // Prevent multiple initializations
+    
+//     console.log("Initializing parking lot...");
+//     await dbConnect();
+    
+//     // Load all levels in parallel for efficiency
+//     const levelPromises = Array(this.NUM_LEVELS).fill().map(async (_, i) => {
+//       try {
+//         const level = await ParkingLevel.findOne({ _id: this.level_ids[i] });
+//         if (level) {
+//           this.levels[i] = new Level(level);
+//           await this.levels[i].initialize();
+//           console.log(`Level ${i} initialized with ${this.levels[i].availableSpots} available spots`);
+//         } else {
+//           console.error(`Level ${i} not found`);
+//           throw new Error(`Level ${i} not found in database`);
+//         }
+//       } catch (error) {
+//         console.error(`Failed to initialize level ${i}:`, error);
+//         throw error;
+//       }
+//     });
+    
+//     await Promise.all(levelPromises);
+//     this.initialized = true;
+//     console.log("Parking lot initialization complete!");
+//   }
+
+//   parkVehicle(vehicle) {
+//     if (!this.initialized) {
+//       throw new Error("Parking lot not initialized. Call initialize() first");
+//     }
+    
+//     for (let i = 0; i < this.levels.length; i++) {
+//       console.log(`Trying to park vehicle ${vehicle.getLicensePlate()} in level ${i}`);
+//       if (this.levels[i].parkVehicle(vehicle)) {
+//         console.log(`Successfully parked vehicle ${vehicle.getLicensePlate()} in level ${i}`);
+//         return true;
+//       }
+//     }
+    
+//     console.log(`Failed to park vehicle ${vehicle.getLicensePlate()} in any level`);
+//     return false;
+//   }
+// }
