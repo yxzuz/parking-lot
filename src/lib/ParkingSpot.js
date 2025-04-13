@@ -12,8 +12,9 @@ export class ParkingSpot {
     }
   
     setAvailable(status){
-      this.available = status; // Set the availability of the spot
+      this.available = status; 
     }
+
     isAvailable() {
       return this.vehicle === null;
     }
@@ -22,18 +23,18 @@ export class ParkingSpot {
       return this.isAvailable() && vehicle.canFitInSpot(this);
     }
 
-
   async park(vehicle) {
-        if (!this.canFitVehicle(vehicle)) { // Check if the vehicle fits
+        if (!this.canFitVehicle(vehicle)) { 
         return false; // Vehicle doesn't fit, parking failed
         }
         vehicle.park(this); // Notify the vehicle it's parked
         this.vehicle = vehicle; // Park the vehicle
         console.log("🚗 Vehicle parked in spot:",this.vehicle);
-        this.spotMongo.currentVehicle = vehicle.getLicensePlate(); // Update the MongoDB object
-        this.spotMongo.isAvailable = false; // Mark the spot as occupied
+        // update mongoDB object
+        this.spotMongo.currentVehicle = vehicle.getLicensePlate(); 
+        this.spotMongo.isAvailable = false; 
         try {
-            await this.spotMongo.save(); // Save the updated MongoDB object
+            await this.spotMongo.save(); 
             if (vehicle.getParkingSpots()){
                 for (let i = 0; i < vehicle.getParkingSpots().length; i++){
                     console.log("🚗 Vehicle parked in spot:",vehicle.getParkingSpots()[i].getSpotNumber());
@@ -41,41 +42,41 @@ export class ParkingSpot {
               console.log("Parking spot saved successfully {");
             }
             
-
         }
         catch (error) {
             console.error("Error saving parking spot:", error);
-            return false; // Save failed, parking failed
+            return false;
         }
         
         return true; // Parking successful
     }
     
     getRow() {
-        return this.row; // Return the row number
+        return this.row; 
     }
     
     getSpotNumber() {
-        return this.spotNumber; // Return the spot number
+        return this.spotNumber; 
     }
     
     getSize() {
-        return this.spotSize; // Return the size of the spot
+        return this.spotSize; 
     }
 
   async removeVehicle() {
         this.level.spotFreed(); // Free the spot from the level
-        this.vehicle = null; // Remove the vehicle from the spot
-        this.spotMongo.currentVehicle = null; // Update the MongoDB object
-        this.spotMongo.isAvailable = true; // Mark the spot as available
+        this.vehicle = null; 
+        // Update the MongoDB object
+        this.spotMongo.currentVehicle = null; 
+        this.spotMongo.isAvailable = true; 
         try {
-            this.spotMongo.save(); // Save the updated MongoDB object
+            this.spotMongo.save(); 
         }
         catch (error) {
             console.error("Error saving parking spot:", error);
-            return false; // Save failed, removal failed
+            return false; 
         }
-        return true; // Removal successful
+        return true; 
     }
 
     print() {
@@ -88,7 +89,7 @@ export class ParkingSpot {
             console.log("m");
           }
         } else {
-          this.vehicle.print(); // Assuming vehicle has a print() method
+          this.vehicle.print(); 
         }
       }
 }

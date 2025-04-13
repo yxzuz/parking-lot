@@ -67,45 +67,6 @@ export default async function handler(req, res) {
       await existingSession.save();
 
     }
-    // let spotsNeeded;
-    // switch (vehicleType) {
-    //   case 'car':
-    //     spotsNeeded = 1;
-    //     break;
-    //   case 'bus':
-    //     spotsNeeded = 5;
-    //     break;
-    //   case 'motorcycle':
-    //     spotsNeeded = 1;
-    //     break;
-    //   default:
-    //     return res.status(400).json({ 
-    //       success: false, 
-    //       message: 'Invalid vehicle type. Must be car, bus, or motorcycle' 
-    //     });
-    // }
-
-    // const myLevel = await ParkingLevel.findById(mySpots[0].level);
-
-    // for (const spot of mySpots) {
-    //   spot.isAvailable = true;
-    //   spot.currentVehicle = null;
-    //   await spot.save();
-    // }
-
-
-    // Update the parking session to mark it as inactive
-    // existingSession.isActive = false;
-    // existingSession.exitTime = new Date();
-    // existingSession.isActive = false;
-    // await existingSession.save();
-
-    // Update the parking level to mark it as available
-    // myLevel.availableSpots += spotsNeeded;
-    // await myLevel.save();
-
-
-    
 
     return res.status(200).json({
         success: true,
