@@ -12,15 +12,10 @@ export class ParkingLot {
     this.initialized = false;
   }
   
-  // Get singleton instance with guaranteed initialization
+  // Get singleton instance
   static async getInstance() {
     if (!instance) {
       instance = new ParkingLot();
-    }
-    
-    // Ensure initialization happens only once
-    if (!instance.initialized) {
-      await instance.initialize();
     }
     
     return instance;

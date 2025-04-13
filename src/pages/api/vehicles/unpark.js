@@ -22,11 +22,13 @@ export default async function handler(req, res) {
       });
     }
 
-    let parkingLot;
+    // let parkingLot;
     
-    if (!parkingLot) {
-      parkingLot = new ParkingLot();
-    }
+    // if (!parkingLot) {
+    //   parkingLot = new ParkingLot();
+    // }
+    
+    const parkingLot = await ParkingLot.getInstance();
     await initializeParkingLot(parkingLot);
 
     // Check if vehicle is already parked
